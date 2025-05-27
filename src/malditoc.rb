@@ -26,6 +26,7 @@ class Malditoc::Node
     @children = []
 
     parent.children << self if parent
+
   end
 
   def level
@@ -37,6 +38,13 @@ class Malditoc::Node
         parent ? parent.level + 1 :
         0
       end
+  end
+
+  def lookup(lv)
+
+    lv > level ? self :
+    parent ? parent.lookup(lv) :
+    nil
   end
 
   def grab_codes(lines, l=nil)
@@ -83,8 +91,10 @@ def Malditoc.read_file(parent, path)
 
     if m = l.match(/^(#+)\s+([^\r\n]+)/)
 
-      current =
-        Malditoc::Node.new(current, path, "h#{m[1].length}".to_sym, m[2])
+      lv = m[1].length
+      pn = current.lookup(lv)
+
+      current = Malditoc::Node.new(pn, path, "h#{lv}".to_sym, m[2])
 
     elsif m = l.match(/^(setup|teardown|before|after)$/)
 
