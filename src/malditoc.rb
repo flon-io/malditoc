@@ -12,22 +12,12 @@ end
 
 class Malditoc::Node
 
-  attr_reader :id, :parent, :path, :type, :text
+  attr_reader :parent, :path, :type, :text
   attr_reader :codes
   attr_reader :children
 
-  class << self
-
-    def next_node_id
-
-      @id ||= -1
-      @id += 1
-    end
-  end
-
   def initialize(parent, path, type, text=nil)
 
-    @id = self.class.next_node_id
     @parent = parent
     @path = path
     @type = type
@@ -42,10 +32,11 @@ class Malditoc::Node
   def level
 
     @_level ||=
-      begin
-        m = @type.match(/(\d+)/)
-        m ? m[1].to_i :
-        parent ? parent.level + 1 :
+      if m = @type.match(/(\d+)/)
+        m[1].to_i
+      elsif parent
+        parent.level + 1
+      else
         0
       end
   end
@@ -70,9 +61,26 @@ class Malditoc::Node
     self
   end
 
+  def id
+
+    case type
+    when :file then File.basename(path)[0..-9]
+    when :root then nil
+    else parent ? parent.children.index(self).to_s(16) : 'xx'
+    end
+  end
+
+  def full_id
+
+    a = [ parent ? parent.full_id : nil, id ]
+    a << type.to_s unless type.to_s.start_with?('h') || type == :root
+
+    a.compact.join('_')
+  end
+
   def fun_name
 
-    "madfun#{id}"
+    "f_#{full_id}"
   end
 
   def to_s
@@ -80,8 +88,8 @@ class Malditoc::Node
     indent = '  ' * level
 
     (
-      [ "#{indent}#{path} #{type}" + (@text ? ' ' + @text.inspect : '') ] +
-      [ "#{indent}void #{fun_name}()" ] +
+      [ "#{indent}#{path} :#{type}" + (@text ? ' ' + @text.inspect : '') ] +
+      [ "#{indent}void #{fun_name}(void)" ] +
       @codes.map { |c| indent + '| ' + c.strip } +
       @children.map(&:to_s)
     ).join("\n")
@@ -107,7 +115,7 @@ def Malditoc.read_file(parent, path)
 
     if m = l.match(/^(#+)\s+([^\r\n]+)/)
 
-      lv = m[1].length
+      lv = m[1].length + 1
       pn = current.lookup(lv)
 
       current = Malditoc::Node.new(pn, path, "h#{lv}".to_sym, m[2])
