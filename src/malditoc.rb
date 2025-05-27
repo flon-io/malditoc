@@ -22,7 +22,7 @@ class Malditoc::Node
     @path = path
     @type = type
     @text = text
-    @codes = nil
+    @codes = []
     @children = []
 
     parent.children << self if parent
@@ -32,24 +32,38 @@ class Malditoc::Node
 
     @_level ||=
       begin
-        m = @type.match(/(\d+)?/)
+        m = @type.match(/(\d+)/)
         m ? m[1].to_i :
         parent ? parent.level + 1 :
-        999
+        0
       end
   end
 
   def grab_codes(lines)
 
-    @codes = []
-
     loop do
       line = lines.shift; break if line == nil
       @codes << line
-      break if line.match?(/^```[^`]/)
+      break if line.match?(/^```\s/)
     end if lines[0].match?(/^```(c|ruby)[ \t]*[\r\n]/)
 
     self
+  end
+
+  def to_s
+
+    indent = '  ' * level
+
+    (
+      [ "#{indent}#{path} #{type}" ] +
+      @codes.map { |c| indent + '| ' + c.strip } +
+      @children.map(&:to_s)
+    ).join("\n")
+  end
+
+  def to_c
+
+    # TODO
   end
 end
 
@@ -86,5 +100,5 @@ root = Malditoc::Node.new(nil, nil, :root)
 
 Malditoc.read_file(root, 'test/dict_test.md')
 
-pp root
+puts root.to_s
 
