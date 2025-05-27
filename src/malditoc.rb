@@ -4,8 +4,8 @@
 #
 # Tue May 27 11:38:53 JST 2025
 
-#
-# goal: simple Ruby script to turn markdown files into "C specs" .c files.
+require 'stringio'
+
 
 module Malditoc
 end
@@ -26,8 +26,10 @@ class Malditoc::Node
     @children = []
 
     parent.children << self if parent
-
   end
+
+  def is_h?; @type.to_s.start_with?('h'); end
+  def has_code?; @codes.any?; end
 
   def level
 
@@ -73,7 +75,7 @@ class Malditoc::Node
   def full_id
 
     a = [ parent ? parent.full_id : nil, id ]
-    a << type.to_s unless type.to_s.start_with?('h') || type == :root
+    a << type.to_s unless %i[ h1 h2 h3 h4 h5 file root ].include?(type)
 
     a.compact.join('_')
   end
@@ -89,7 +91,8 @@ class Malditoc::Node
 
     (
       [ "#{indent}#{path} :#{type}" + (@text ? ' ' + @text.inspect : '') ] +
-      [ "#{indent}void #{fun_name}(void)" ] +
+      #[ "#{indent}`void #{fun_name}(void)`" ] +
+      [ "#{indent}#{fun_name}" ] +
       @codes.map { |c| indent + '| ' + c.strip } +
       @children.map(&:to_s)
     ).join("\n")
@@ -97,7 +100,31 @@ class Malditoc::Node
 
   def to_c
 
-    # TODO
+    _to_c(StringIO.new).string
+  end
+
+  protected
+
+  def _to_c(s)
+
+    if type == :file
+      s << "\n/*** file  #{path} */\n\n"
+    elsif is_h?
+      s << "  /* #{text} */\n"
+      if has_code?
+        s << "void " << fun_name << "(void) {\n"
+        codes.each do |c|
+          s << c unless c.match?(/^```/)
+        end
+        s << "}\n\n"
+      end
+    end
+
+    @children.each do |c|
+      c._to_c(s)
+    end
+
+    s
   end
 end
 
@@ -142,8 +169,10 @@ root = Malditoc::Node.new(nil, nil, :root)
 Malditoc.read_file(root, 'test/dict_test.md')
 
 p DATA.read
+puts "-" * 80
 puts root.to_s
-#puts root.to_c
+puts "-" * 80
+puts root.to_c
 
 __END__
 
