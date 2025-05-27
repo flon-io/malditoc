@@ -12,12 +12,22 @@ end
 
 class Malditoc::Node
 
-  attr_reader :parent, :path, :type, :text
+  attr_reader :id, :parent, :path, :type, :text
   attr_reader :codes
   attr_reader :children
 
+  class << self
+
+    def next_node_id
+
+      @id ||= -1
+      @id += 1
+    end
+  end
+
   def initialize(parent, path, type, text=nil)
 
+    @id = self.class.next_node_id
     @parent = parent
     @path = path
     @type = type
@@ -60,12 +70,18 @@ class Malditoc::Node
     self
   end
 
+  def fun_name
+
+    "madfun#{id}"
+  end
+
   def to_s
 
     indent = '  ' * level
 
     (
       [ "#{indent}#{path} #{type}" + (@text ? ' ' + @text.inspect : '') ] +
+      [ "#{indent}void #{fun_name}()" ] +
       @codes.map { |c| indent + '| ' + c.strip } +
       @children.map(&:to_s)
     ).join("\n")
@@ -119,6 +135,7 @@ Malditoc.read_file(root, 'test/dict_test.md')
 
 p DATA.read
 puts root.to_s
+#puts root.to_c
 
 __END__
 
