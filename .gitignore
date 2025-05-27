@@ -1,0 +1,15 @@
+
+# .gitignore
+
+*.swp
+.vimrc
+.viminfo
+.vimgrep
+.vimspec
+.vimmarks
+
+.chat.md
+.deep.md
+.openai.*
+.deepseek.*
+
