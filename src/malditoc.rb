@@ -107,5 +107,10 @@ root = Malditoc::Node.new(nil, nil, :root)
 
 Malditoc.read_file(root, 'test/dict_test.md')
 
+p DATA.read
 puts root.to_s
+
+__END__
+
+foo bar
 
