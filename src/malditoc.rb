@@ -39,13 +39,15 @@ class Malditoc::Node
       end
   end
 
-  def grab_codes(lines)
+  def grab_codes(lines, l=nil)
+
+    @codes << l if l
 
     loop do
       line = lines.shift; break if line == nil
       @codes << line
       break if line.match?(/^```\s/)
-    end if lines[0].match?(/^```(c|ruby)[ \t]*[\r\n]/)
+    end if l || lines[0].match?(/^```(c|ruby)[ \t]*[\r\n]/)
 
     self
   end
@@ -88,7 +90,12 @@ def Malditoc.read_file(parent, path)
 
       Malditoc::Node.new(current, path, m[1].to_sym).grab_codes(lines)
 
+    elsif l.match?(/^```(c|ruby)$/)
+
+      current.grab_codes(lines, l)
+
     else
+
       # simply ignore
     end
   end
