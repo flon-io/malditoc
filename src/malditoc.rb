@@ -57,7 +57,7 @@ class Malditoc::Node
     indent = '  ' * level
 
     (
-      [ "#{indent}#{path} #{type}" ] +
+      [ "#{indent}#{path} #{type}" + (@text ? ' ' + @text.inspect : '') ] +
       @codes.map { |c| indent + '| ' + c.strip } +
       @children.map(&:to_s)
     ).join("\n")

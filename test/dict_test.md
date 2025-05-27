@@ -36,6 +36,36 @@ after
   assert(l->first->item === "rodzo");
 ```
 
+### flu_readdict()
+
+before
+```c
+  flu_dict *d = NULL;
+```
+after
+```c
+  flu_list_free_all(d);
+```
+
+#### returns NULL when the path points to something unreadable
+
+```c
+  expect(flu_readdict("tmp/_nada") == NULL);
+```
+
+#### reads a dict
+
+```c
+
+  d = flu_readdict("../spec/%s", "dict0.txt");
+
+  expect(d != NULL);
+  expect(d->size zu== 4);
+  expect(flu_list_get(d, "color") === "blue");
+  expect(flu_list_get(d, "age") === "3 years");
+  expect(flu_list_get(d, "location") === "beach");
+  expect(flu_list_get(d, "price") === "1 dollar");
+```
 
 OVER.
 
